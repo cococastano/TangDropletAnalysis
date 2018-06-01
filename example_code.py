@@ -18,7 +18,7 @@ height = test_frame.shape[1]
 #video = cv2.VideoWriter('all_frames_mark_up.avi',-1,20,(width*2,height*2))
 
 n = 3  # number of vertices of polygon to interrogate
-frame_range = [i for i in range(0,21)]
+frame_range = [k for k in range(0,21)]
 frames = data_utils.pull_frame_range(frame_range=frame_range,#frame_range,
                                      num_break=5, num_nobreak=5)
 # do some plotting to verify what we've got so far
@@ -71,4 +71,4 @@ for frame_key in frames:
         cv2.imshow('mark up', show_frame)
         cv2.imshow('combined contour', comb_cont_frame)
         cv2.waitKey(500)
-
+	print('changes')
