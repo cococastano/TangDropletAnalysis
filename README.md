@@ -1,12 +1,3 @@
-final Duh
-Kevin change in master Duh
-this is a conflinct change
-
-i am editing
-who the waht the
-what uh 
-whoachange in master Duh
-
 # Tang Analysis Codes
 
 Consolidation of Tang analysis codes written in Python and MATLAB for processing videos of droplets and stentor cells and for applying machine learning. 
