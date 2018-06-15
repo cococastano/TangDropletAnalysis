@@ -1,3 +1,5 @@
+final Duh
+Kevin change in master Duh
 this is a conflinct change
 
 i am editing
