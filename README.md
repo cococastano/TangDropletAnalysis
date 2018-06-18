@@ -26,13 +26,13 @@ Droplet break and no-break clustering by 50 node fully connected layer
 
 #### Figures produced from autoencoder
 Original image: <br/>
-![picture alt](./Figures/orig_image_sub12_epoch25.png =350x)
+![picture alt](./Figures/orig_image_sub12_epoch25.png | width=350)
 
 Layer 0 of 4 in encoded image: <br/>
-![picture alt](./Figures/encode_image_sub0_epoch25.png =350x)
+![picture alt](./Figures/encode_image_sub0_epoch25.png | width=350)
 
 Layer decoded image: <br/>
-![picture alt](./Figures/decode_image_sub0_epoch25.png =350x)
+![picture alt](./Figures/decode_image_sub0_epoch25.png | width=350)
 
 ## Miscellaneous
 Additional data anlaytics codes for reading and processing large text files from PMT signals, for example.
