@@ -5,6 +5,14 @@ import os
 import random
 import math
 
+"""
+Nicolas Castano
+Last revision: 6/17/18
+
+Utility functions for data processing. Mostly written to support convolutional
+net codes but has many useful functions for other processing applications
+
+"""
 
 def pull_frame_range(frame_range = [3], video_dir=None, num_break=None, 
                      num_nobreak=None, save_option=False, add_flip=True,

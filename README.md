@@ -1,10 +1,3 @@
-this is a conflinct change
-
-i am editing
-who the waht the
-what uh 
-whoachange in master Duh
-
 # Tang Analysis Codes
 
 Consolidation of Tang analysis codes written in Python and MATLAB for processing videos of droplets and stentor cells and for applying machine learning. 
@@ -31,6 +24,12 @@ Epoch
 #### Clustering by fully connected layer of encoded image
 Droplet break and no-break clustering by 50 node fully connected layer
 
+#### Figures produced from autoencoder
+Original image: <br/>
+![picture alt](./Figures/orig_image_sub12_epoch25.png)
+
+Layer 0 of 4 in encoded image: <br/>
+![picture alt](./Figures/encode_image_sub0_epoch25.png)
 
 ## Miscellaneous
 Additional data anlaytics codes for reading and processing large text files from PMT signals, for example.

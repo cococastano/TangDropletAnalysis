@@ -5,6 +5,11 @@ import numpy as np
 import os
 
 """
+Precursor to data_utils. Not a great idea to run this code on mots of video
+data. Will bog down computer.
+
+
+"""
 This script writes all frames to a dictionary and saves the dictionary in the 
 current directory. NOTE the final dictioanry file is very large if you include
 many videos to save, it WILL slow down your computer. Take this as a first 

@@ -9,6 +9,16 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 import cv2
 
+"""
+Nicolas Castano
+Last revision: 6/17/18
+
+Insert custom architectures of use preexisting architectures to train models
+for binary classification using prelabeled data. See data strusture for 
+droplet breakup problem where data was labeled based on the parent directory
+where video files resided.
+
+"""
 
 # will we be using GPUs?
 USE_GPU = False

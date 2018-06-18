@@ -6,6 +6,13 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib.animation import FFMpegWriter
 
+"""
+Nicolas Castano
+Last revision: 6/17/18
+
+Methods that return useful features from images...
+
+"""
 
 def get_correct_contours(frame):
     """

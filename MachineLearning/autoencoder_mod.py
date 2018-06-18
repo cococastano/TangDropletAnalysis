@@ -11,6 +11,16 @@ from torch.autograd import Variable
 from torchvision import transforms
 from torchvision.utils import save_image
 
+"""
+Nicolas Castano
+Last revision: 6/17/18
+
+Module to import for using trained autoencoder models from conv_autoencoder.
+Class has methods for reducing to fully connected layer and viewing encoded images.
+
+"""
+
+
 ############################## CLASSES AND METHODS ############################
 def flatten(x):
     # read in N, C, H, W

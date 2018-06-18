@@ -7,6 +7,14 @@ from scipy import signal
 from detect_peaks import detect_peaks
 from scipy.interpolate import interp1d
 
+"""
+Nicolas Castano
+Last revision: 6/17/18
+
+Pulling time data from long data file (~1.3 GB/text file)
+
+"""
+
 
 def chunks(l, n):
     """yield successive n-sized chunks from l"""

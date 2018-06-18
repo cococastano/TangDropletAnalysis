@@ -10,10 +10,16 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 import torch.nn.functional as F
-import torchvision.transforms as T
 from sklearn.cluster import SpectralClustering, KMeans
 from autoencoder_mod import autoencoder
+"""
+Nicolas Castano 
+Last revision: 6/17/18
 
+Run k-means cluster off of autoencoded data. Indicate model_name and adjust
+path in model_file
+
+"""
 # will we be using GPUs?
 USE_GPU = False
 if USE_GPU and torch.cuda.is_available(): device = torch.device('cuda')

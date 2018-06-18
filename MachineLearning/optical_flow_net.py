@@ -10,6 +10,14 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 import cv2
 
+"""
+Nicolas Castano 
+Last revision: 6/17/18
+
+Run convolutional net on optical encoded data. Optical encoded frames should 
+be written prior using mean_opt_flow_field.
+
+""""
 
 # will we be using GPUs?
 USE_GPU = False

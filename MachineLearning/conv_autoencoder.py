@@ -10,6 +10,17 @@ from torch.autograd import Variable
 from torchvision import transforms
 from torchvision.utils import save_image
 
+"""
+Nicolas Castano
+Last revision: 6/17/18
+
+Train autoencoder to represent input images down to a N X 4 X 22 X 15 greyscale
+images from 176 X 120. Autoencoder class has methods to output flully connected
+layer to chosen type.
+
+"""
+
+
 ############################## CLASSES AND METHODS ############################
 def flatten(x):
     # read in N, C, H, W

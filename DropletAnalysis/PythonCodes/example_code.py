@@ -3,6 +3,14 @@ import numpy as np
 import data_utils
 import extract_features
 
+"""
+Nicolas Castano
+Last revision: 6/17/18
+
+Example code to show some utilities from extract_features and data_utils
+
+"""
+
 
 # just some example code
 
