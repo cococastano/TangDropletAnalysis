@@ -115,7 +115,7 @@ for i, sub_range in enumerate(part_frame_range):
                                     ret_n_params=3)
     data = np.append(data,params,axis=0)
     classes = np.append(classes,out_classes)
-    print(len(classes),np.count_nonzero(classes),len(classes)-np.count_nonzero(classes))
+#    print(len(classes),np.count_nonzero(classes),len(classes)-np.count_nonzero(classes))
     data_3d = np.append(data_3d,params_3d,axis=0)
     
     
@@ -130,7 +130,7 @@ data_3d = (data_3d - means_3d) / sd_3d
 
     
 # CLUSTER
-N_CLUSTER = 100
+N_CLUSTER = 2
 specCluster = SpectralClustering(n_clusters=N_CLUSTER, random_state=1, 
                                  n_init=30)
 specLabels = specCluster.fit_predict(data)

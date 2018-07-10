@@ -47,14 +47,17 @@ def draw_hsv(flow,frame, overlay=True):
 
 ################################### SCRIPT ####################################
 
+# pull range of frames across all video files
 frame_range = [i for i in range(0,30)]
 my_frames = data_utils.pull_frame_range(frame_range=frame_range,
-                                        num_break=2, num_nobreak=2, 
+                                        num_break=100, num_nobreak=100, 
                                         add_flip=False)
-
+# loop over each set of video frames
 for key in my_frames:
     prev_frame = my_frames[key][0]
 #    prev_frame = cv2.flip(prev_frame,0)
+    # find constriction, crop, resize, and blur the frame
+    # resizig and bluring is to add some artificial texture 
     constr_loc = data_utils.find_constriction(prev_frame)
     prev_frame = data_utils.crop_my_frame(prev_frame,[0,constr_loc+5,
                                                       0,prev_frame.shape[0]])
@@ -72,6 +75,7 @@ for key in my_frames:
         frame = data_utils.resize_my_frame(frame, scale_factor=4)
         frame = cv2.blur(frame,(17,17))
         orig_frame = frame
+        # calculate optical flow field between subsequent frames
         flow = cv2.calcOpticalFlowFarneback(prev_frame, frame, None, 
                                             pyr_scale=0.5, levels=3, 
                                             winsize=18, iterations=3,
@@ -84,6 +88,7 @@ for key in my_frames:
         cv2.imshow('flow', draw_flow(prev_frame,flow))
         cv2.waitKey(500)
      
+    # average over flow fields
     mean_flow = np.array(np.round(mean_flow), dtype=np.uint8)
     mean_flow = data_utils.resize_my_frame(mean_flow, scale_factor=0.25)
     file_name = 'C:/Users/nicas/Documents/CS231N-ConvNNImageRecognition/' + \
@@ -91,6 +96,7 @@ for key in my_frames:
                 key + '_noflip.png'
     cv2.imshow('small',cv2.blur(mean_flow,(5,5)))
     cv2.waitKey(500)
+    # write to output folder
 #    cv2.imwrite(file_name, cv2.blur(mean_flow,(5,5)))
     
     

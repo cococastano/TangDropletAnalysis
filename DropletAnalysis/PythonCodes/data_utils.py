@@ -107,7 +107,7 @@ def pull_frame_range(frame_range = [3], video_dir=None, num_break=None,
                 frame = cv2.blur(frame,(3,3))
             # expect the pixel values to be 0 or 255 (some max) so...
             frame = np.uint8(frame)
-            frame = np.invert(frame)
+            # frame = np.invert(frame)
             # append frame to dictionary under respective key
             try:
                 # try to append
