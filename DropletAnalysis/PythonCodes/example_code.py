@@ -28,7 +28,8 @@ height = test_frame.shape[1]
 n = 3  # number of vertices of polygon to interrogate
 frame_range = [i for i in range(0,21)]
 frames = data_utils.pull_frame_range(frame_range=frame_range,#frame_range,
-                                     num_break=5, num_nobreak=5)
+                                     num_break=5, num_nobreak=5,
+                                     add_flip=False)
 # do some plotting to verify what we've got so far
 for frame_key in frames:
     for i, frame in enumerate(frames[frame_key]):      

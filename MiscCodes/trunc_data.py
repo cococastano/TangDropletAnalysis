@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt
 
 # truncate data files by a time
 
-file_in = 'E:/BAT/062818_flow_cyto_v3_my_blood/neg_stim_2_Av_0pt1_0pt3_10000sps.txt'
-file_out = 'E:/BAT/062818_flow_cyto_v3_my_blood/neg_stim_2_Av_0pt1_0pt3_10000sps_trunc.txt'
+file_in = 'E:/BAT/071818_flow_cyto_v6_my_blood/pos_stim_3_Av_1pt5_0pt6_20000sps.txt'
+file_out = 'E:/BAT/071818_flow_cyto_v6_my_blood/pos_stim_3_Av_1pt5_0pt6_20000sps_trunc.txt'
 
 with open(file_in,'r') as infile, open(file_out,'w') as outfile:
     for i,line in enumerate(infile):
         time = float(line.split()[0])
-        if time < 3700:
+        if time < 530:
             outfile.write(line)
             if i % 5000000 == 0: print('writing line ',i)
         else:
@@ -17,10 +17,10 @@ with open(file_in,'r') as infile, open(file_out,'w') as outfile:
     
         
 # and remove erroneous spikes (i.e. from ambient light)
-file_in = 'E:/BAT/062818_flow_cyto_v3_my_blood/pos_stim_2_Av_0pt1_0pt3_10000sps_adj.txt'         
-file_out = 'E:/BAT/062818_flow_cyto_v3_my_blood/pos_stim_2_Av_0pt1_0pt3_10000sps_adj2.txt'
-trunc_t_1 = 4893
-trunc_t_2 = 4942
+file_in = 'E:/BAT/071818_flow_cyto_v6_my_blood/pos_stim_3_Av_1pt5_0pt6_20000sps.txt'        
+file_out = 'E:/BAT/071818_flow_cyto_v6_my_blood/pos_stim_3_Av_1pt5_0pt6_20000sps_trunc.txt'
+trunc_t_1 = 0
+trunc_t_2 = 4.6
 with open(file_in,'r') as infile, open(file_out,'w') as outfile:
     for i,line in enumerate(infile):
         time = float(line.split()[0])
@@ -30,7 +30,7 @@ with open(file_in,'r') as infile, open(file_out,'w') as outfile:
             if i % 500000 == 0: print('writing line ',i)
         elif time >= trunc_t_1 and time <= trunc_t_2:
             if i % 100000 == 0: print('omitting line ',i)
-        elif time > 170:
+        elif time > trunc_t_2:
             t = time - (trunc_t_2 - trunc_t_1)
             my_line = '%.6f\t%.6f\n' % (t,val)
             outfile.write(my_line)
@@ -55,12 +55,13 @@ with open(file_in,'r') as infile, open(file_out,'w') as outfile:
     shift_t = 0.0
     for i, line in enumerate(infile):
         time = float(line.split()[0])
+        time = time - shift_t
         val = float(line.split()[1])
         # if the delta t is more than a second, shift data over
         if time - prev_t > thresh_t:
             shift_t = shift_t + (time - prev_t)
-        time = time - shift_t
-        prev_t = shift_t
+            print('adjusting for gap in data... new shift time: ', shift_t)
+        prev_t = time
         my_line = '%.6f\t%.6f\n' % (time,val)
         outfile.write(my_line)
         if i % 500000 == 0: print('writing line ',i)
@@ -89,8 +90,8 @@ with open(file_out,'w') as outfile:
             
             
 ############################ PLOT CHANGES YOU MADE ############################
-file_in = 'E:/BAT/062818_flow_cyto_v3_my_blood/neg_stim_1_Av_0pt1_0pt3_10000sps.txt'         
-file_out = 'E:/BAT/062818_flow_cyto_v3_my_blood/neg_stim_1_Av_0pt1_0pt3_10000sps_trunc_adj.txt'
+file_in = 'E:/BAT/062818_flow_cyto_v4_bryan_blood/neg_stim_1_Av_100mbar_0pt3_10000sps.txt'         
+file_out = 'E:/BAT/062818_flow_cyto_v4_bryan_blood/neg_stim_1_Av_100mbar_0pt3_10000sps_adj.txt'
 my_files = {file_in, file_out}
 # each item is a tuple with time and signal
 PMT_signals = {key.split('.txt')[0]:([],[]) for key in my_files}
@@ -101,7 +102,7 @@ for file in my_files:
     with open(file_name, 'r') as f:
         sub_count = 0
         for count, line in enumerate(f, start=1):
-            if count % 1 == 0:
+            if count % 2 == 0:
                 data = line.split()
                 PMT_signals[key][0].append(float(data[0]))
                 PMT_signals[key][1].append(float(data[1]))
@@ -126,5 +127,6 @@ for i, key in enumerate(PMT_signals, start=1):
     plt.title(key)
     plt.ylim((0,0.4))
     plt.grid()
-
+    
+plt.rcParams['agg.path.chunksize'] = 10000
 plt.show()

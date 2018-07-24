@@ -33,9 +33,9 @@ def downsample_for_peaks(sig, mph=None, mpd=1, interp_type='linear',
     # first get all peaks and determine mean of portion of peaks for mph
     peak_i_init = detect_peaks(sig, mph=None, mpd=mpd, show=False)
     peaks_init = [sig[pk_i] for pk_i in peak_i_init]
-    lower_mar = peaks_init[:5]#int(len(sig)*mean_mar)]
+    lower_mar = peaks_init[:100]#int(len(sig)*mean_mar)]
     
-    if mph == None: mph = np.mean(lower_mar) + 0.01
+    if mph == None: mph = np.mean(lower_mar) + 0.007
     
     peak_i = detect_peaks(sig, mph=mph, mpd=mpd, show=False)
     fit_time = np.linspace(part_time[j][0], part_time[j][-1], 
@@ -66,7 +66,7 @@ def downsample_for_peaks(sig, mph=None, mpd=1, interp_type='linear',
 
 # plot PMT signal for flow cytometer; store values by step
 plt.close('all')
-line_step = 15
+line_step = 2
 
 # get directory with data files
 root = tkinter.Tk()
@@ -91,12 +91,12 @@ peaks = {key.split('.txt')[0]:([],[]) for key in file_list[0] \
 ds_lower_mean = {key:0 for key in list(signal_means.keys())}
 
 # number of data points in partition and storing peak counts
-num_in_parts = 10000  
+num_in_parts = 80000  
 my_peak_count = {key:0 for key in list(signal_means.keys())}
 
 # set up plotting
 i = 0  # index for subplotting
-subplot_rows = 3
+subplot_rows = 2
 subplot_cols = len(test_names)
 subplot_fig, axs = plt.subplots(subplot_rows, subplot_cols,figsize=(25,12))
 subplot_fig.subplots_adjust(hspace=0.5,wspace=0.2) 
@@ -146,20 +146,20 @@ for test in test_names:
     ds_lower_mean[test] = np.mean(sorted(downsample_data[test][1])[:10])
 
 
-    ax2 = plt.subplot(subplot_rows, subplot_cols, i+len(test_names))
-    ax2.plot(PMT_signal[0],PMT_signal[1],'k',linewidth=2,label='raw data')
-    ax2.plot(downsample_data[test][0],downsample_data[test][1],linewidth=2,
-             label='downsampled data')
-    ax2.set_ylim((0,0.4))
+#    ax2 = plt.subplot(subplot_rows, subplot_cols, i+len(test_names))
+#    ax2.plot(PMT_signal[0],PMT_signal[1],'k',linewidth=2,label='raw data')
+#    ax2.plot(downsample_data[test][0],downsample_data[test][1],linewidth=2,
+#             label='downsampled data')
+#    ax2.set_ylim((0,0.4))
 
     # find peaks on this downsampled signal
-    peak_i = detect_peaks(downsample_data[test][1], mph=ds_lower_mean[test]+0.01, 
+    peak_i = detect_peaks(downsample_data[test][1], mph=ds_lower_mean[test]+0.003, 
                           mpd=1, show=False)  
     pk = [downsample_data[test][1][pk_i] for pk_i in peak_i]
     t = [downsample_data[test][0][pk_i] for pk_i in peak_i]
     peaks[test][1].extend(pk)
     peaks[test][0].extend(t)
-    ax3 = plt.subplot(subplot_rows, subplot_cols, i+2*len(test_names))
+    ax3 = plt.subplot(subplot_rows, subplot_cols, i+len(test_names))
     ax3.plot(downsample_data[test][0],downsample_data[test][1],'k',
              linewidth=2,label='downsampled data')
     ax3.plot(peaks[test][0],peaks[test][1],'o',linewidth=2,
