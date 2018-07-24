@@ -21,16 +21,18 @@ A starter pack for lab members to apply machine learning to their projects. A go
 #### Convolutional autoencoder
 ![picture alt](./Figures/autoencode_rep.png)
 
+
 #### Clustering by fully connected layer of encoded image
-Mean image of 20 frames in given clusters (5000 total clusters)
-![picture alt](./Figures/autoencode_5000_clusters_kMeansMiniBatch_mean_20_rep.png)
-Random sampling of two clusters
-![picture alt](./Figures/reps_5000_clusters.png)
+Mean image of 20 frames in given clusters (left) and random sampling of two clusters (two right) (5000 total clusters)
+![picture alt](./Figures/rep_5000_clusters.png)
+
 
 ## Miscellaneous
 Additional data anlaytics codes for reading and processing large text files from PMT signals, for example.
 
+
 ## Notes on Python environment
 The codebase was developed using Python (3.6.5), OpenCV (version 3.4.1), PyTorch (version 0.4.0). All other modules should also be current and would come standard with Spyder or PyCharm IDEs.
+
 
 ### Happy coding!
