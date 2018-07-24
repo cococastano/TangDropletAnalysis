@@ -19,20 +19,13 @@ Combining contour frame: <br/>
 A starter pack for lab members to apply machine learning to their projects. A good starting point is *conv_nets.py* for predicting droplet breakup that relies heavily on *data_utils.py* for extracting preprocessed frames to set up the data structure. Again, see *write_all_frames_to_dictionary.py* for reference on setting up working directories. Modules are written using PyTorch.
 
 #### Convolutional autoencoder
-Epoch 
+![picture alt](./Figures/autoencode_rep.png)
 
 #### Clustering by fully connected layer of encoded image
-Droplet break and no-break clustering by 50 node fully connected layer
-
-#### Figures produced from autoencoder
-Original image: <br/>
-![picture alt](./Figures/orig_image_sub12_epoch25.png)
-
-Layer 0 of 4 in encoded image: <br/>
-![picture alt](./Figures/encode_image_sub0_epoch25.png)
-
-Layer decoded image: <br/>
-![picture alt](./Figures/decode_image_sub12_epoch25.png)
+Mean image of 20 frames in given clusters (5000 total clusters)
+![picture alt](./Figures/autoencode_5000_clusters_kMeansMiniBatch_mean_20_rep.png)
+Random sampling of two clusters
+![picture alt](./Figures/reps_5000_clusters.png)
 
 ## Miscellaneous
 Additional data anlaytics codes for reading and processing large text files from PMT signals, for example.
