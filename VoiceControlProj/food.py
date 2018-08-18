@@ -28,6 +28,12 @@ import urllib.request
 import oauth2client
 from oauth2client.file import Storage
 from googleapiclient.discovery import build
+import sys
+import requests
+import nltk
+from nltk import word_tokenize
+from nltk import pos_tag
+
 
 def sheet_oauth():
     '''
@@ -67,7 +73,11 @@ def write_to_sheet(credentials,spreadsheetId, input):
     service = build('sheets', 'v4', http=http, cache_discovery = False)
     rangeName = 'A1'
     value_input_option = "USER_ENTERED"
-    payload = {"values": [[input["date"],input["time"],input["text"]]]}
+    ip = [input["date"],input["time"],input["text"]]
+    for foo in input["food"]:
+        ip.append(foo)
+    payload = {"values": [ip]}
+    #print(payload)
     request = service.spreadsheets().values().append(spreadsheetId=spreadsheetId, range=rangeName,
                                                      valueInputOption=value_input_option,body=payload)
     response = request.execute()
@@ -92,8 +102,29 @@ def main():
              time = now.strftime("%I:%M %p")
              text2 = text.replace("I", "You") + ' on ' + date + ' at ' + time
              aiy.audio.say(text2, lang="en-US")
+             tokens = word_tokenize(text)
+             tags = pos_tag(tokens)
+            # print(tags)
+             search_list = []
+             url = "https://api.nal.usda.gov/ndb/search/"
+             for word,tag in tags:
+                 if tag == 'NN' or tag == 'NNP' or tag == 'NNS' or tag == 'NNPS':
+                     search_list.append(word)
+             #print(search_list)
+             food_list = []
+             if search_list:
+                 for word in search_list:
+                     querystring = {"format": "json", "q": word, "sort": "n", "max": "25", "offset": "0", "api_key": "nYWMDcdIdc9jiysWJ1V63m2klecwMtcO1PTR7IAh"}
+                     response = requests.request("GET", url, params=querystring)
+                     #print(response.text)
+                     resp_text = json.loads(response.text)
+                     if "errors" not in resp_text:
+                        #print(text["list"])
+                        #print(word)
+                        food_list.append(word)
+             #print(food_list)
              credentials = sheet_oauth()
-             input = {"date":date,"time":time,"text":text}
+             input = {"date":date,"time":time,"text":text,"food":food_list}
              write_to_sheet(credentials,'1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', input)
 if __name__ == '__main__':
     main()
