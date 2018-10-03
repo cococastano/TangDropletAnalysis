@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# Copyright 2017 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,13 +32,18 @@ import nltk
 from nltk import word_tokenize
 from nltk import pos_tag
 
+# "logged" contains all the nutrients that are logged
+logged = ["Energy", "Protein", "Total lipid (fat)", "Carbohydrate, by difference", "Fiber, total dietary", "Sugars, total", "Sugars, added", "Calcium, Ca", "Iron, Fe", "Sodium, Na", "Vitamin C, total ascorbic acid", "Vitamin A, IU", "Fatty acids, total saturated", "Fatty acids, total trans", "Cholesterol"]
+# "allergens" contains all the possible allergens
+allergens = ["Milk", "Eggs", "Fish", "Crustacean shellfish", "Tree nuts", "Peanuts", "Wheat", "Soybeans"]
+# "allergens_list" stores the list of allergens that the food contains
+allergens_list = []
 
 def sheet_oauth():
     '''
-       This method authorizes the sheets API requests. The client_id, client_secret, and refresh_token
-       are obtained by allowing the app from a browser request.
-       This method then uses the refresh token to generate a new access token, which is used to get the credentials necessary for Google Sheets APIs.
-       Returns credentials to make API requests to Google Sheets.
+       This method authorizes the sheets API requests. The client_id , client_secret, refresh_token
+        are obtained by allowing the app from a browser request.
+       Returns credentials to make API requests to google sheet.
     '''
     client_id = "759306969044-tnqihvtr1cm0us78g81iv9th3ohseg4v.apps.googleusercontent.com"
     client_secret = "2OgTLPBlYk5t_HkpDzLyNpmD"
@@ -69,17 +72,22 @@ def sheet_oauth():
 def write_to_sheet(credentials,spreadsheetId, input):
     '''
        This method appends the input onto the given spreadsheet.
-       It first builds a service request to the Spreadsheets APIs. 
-       The input is formatted as a dictionary containing the date, time, text, 
-       and a nested dictionary containing the food names, which are all appended onto a new row of the spreadsheet. 
     '''
     http = credentials.authorize(httplib2.Http())
     service = build('sheets', 'v4', http=http, cache_discovery = False)
     rangeName = 'A1'
     value_input_option = "USER_ENTERED"
     ip = [input["date"],input["time"],input["text"]]
+    foos = []
     for foo in input["food"]:
-        ip.append(foo)
+        foos.append(foo)
+    ip.append(str(foos).strip('[').strip(']').replace('\'', ''))
+    algs = []
+    for alg in input["allergens_log"]:
+        algs.append(alg)
+    ip.append(str(algs).strip('[').strip(']').replace('\'', ''))
+    for nutrient in input["nutrients"]:
+        ip.append(nutrient)
     payload = {"values": [ip]}
     #print(payload)
     request = service.spreadsheets().values().append(spreadsheetId=spreadsheetId, range=rangeName,
@@ -94,19 +102,11 @@ logging.basicConfig(
 
 
 def main():
-    '''
-       First ask a question to the user and 
-       recognize the user's text. 
-    '''
     assistant = aiy.assistant.grpc.get_assistant()
     with aiy.audio.get_recorder():
          aiy.audio.say('What food did you eat today?', lang="en-US")
          print('Listening...')
          text, audio = assistant.recognize()
-          '''
-             Get the correct date and time of the answer and
-             repeat the complete text back to the user. 
-          ''' 
          if text:
              cupertino = timezone('US/Pacific')
              now = datetime.now(cupertino)
@@ -114,34 +114,64 @@ def main():
              time = now.strftime("%I:%M %p")
              text2 = text.replace("I", "You") + ' on ' + date + ' at ' + time
              aiy.audio.say(text2, lang="en-US")
-             '''
-                Identify the parts of speech for each word and 
-                extract only the nouns from the text. 
-             '''    
              tokens = word_tokenize(text)
              tags = pos_tag(tokens)
+            # print(tags)
              search_list = []
+             url_food = "https://api.nal.usda.gov/ndb/search/"
              for word,tag in tags:
                  if tag == 'NN' or tag == 'NNP' or tag == 'NNS' or tag == 'NNPS':
                      search_list.append(word)
-             '''
-                For each noun, search it on USDA’s food list.
-                If there are search results, add the noun to the existent food list input. 
-             ''' 
+             #print(search_list)
              food_list = []
-             url = "https://api.nal.usda.gov/ndb/search/"
              if search_list:
                  for word in search_list:
                      querystring = {"format": "json", "q": word, "sort": "n", "max": "25", "offset": "0", "api_key": "nYWMDcdIdc9jiysWJ1V63m2klecwMtcO1PTR7IAh"}
-                     response = requests.request("GET", url, params=querystring)
+                     response = requests.request("GET", url_food, params=querystring)
+                     #print(response.text)
                      resp_text = json.loads(response.text)
                      if "errors" not in resp_text:
-                        #print(text["list"])
-                        #print(word)
                         food_list.append(word)
-             #print(food_list)
+                        # find the ndb number of the food
+                        ndb_number = resp_text["list"]["item"][0]["ndbno"]
+                        # print(ndb_number)
+                        url_nutrients = "https://api.nal.usda.gov/ndb/reports/"
+
+                        number = str(ndb_number)
+                        querystring_nutrients = {"ndbno": number, "type": "b", "format": "json", "api_key": "nYWMDcdIdc9jiysWJ1V63m2klecwMtcO1PTR7IAh"}
+
+                        headers_nutrients = {
+                                'cache-control': "no-cache"
+                        }
+
+                        response_nutrients = requests.request("GET", url_nutrients, headers=headers_nutrients, params=querystring_nutrients)
+
+                        # get nutrient list of the food
+                        response_text_nutrients = json.loads(response_nutrients.text)
+
+                        # get ingredients of the food
+                        ingredients_list = response_text_nutrients["report"]["food"]["ing"]["desc"]
+
+                        # find allergens in the food
+                        for allergen in allergens:
+                           if allergen.upper() in ingredients_list:
+                              allergens_list.append(allergen)
+
+                        # print(allergens_list)
+
+                        # get all nutrient values
+                        nutrient_list = []
+                        for nutrient in logged:
+                            value = 0
+                            for i in range(0, len(response_text_nutrients["report"]["food"]["nutrients"])):
+                                if (nutrient == response_text_nutrients["report"]["food"]["nutrients"][i]["name"]):
+                                    value = response_text_nutrients["report"]["food"]["nutrients"][i]["value"]
+                            #print(nutrient + ": " + str(value))
+                            nutrient_list.append(value)
+
+            #print(food_list)
              credentials = sheet_oauth()
-             input = {"date":date,"time":time,"text":text,"food":food_list}
+             input = {"date":date,"time":time,"text":text,"food":food_list, "allergens_log": allergens_list, "nutrients": nutrient_list}
              write_to_sheet(credentials,'1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', input)
 if __name__ == '__main__':
     main()
