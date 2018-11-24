@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Copyright 2017 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +15,13 @@
 
 """A demo of the Google Assistant GRPC recognizer."""
 
+'''
+This class instantiates foodProcessor to get foods, allergens, and nutrients from the user's text. 
+It then uses foodLog to log the information onto the Google Spreadsheet. 
+'''
+
+import foodProcessor
+import foodLog
 import logging
 import json
 import aiy.assistant.grpc
@@ -28,72 +37,6 @@ from oauth2client.file import Storage
 from googleapiclient.discovery import build
 import sys
 import requests
-import nltk
-from nltk import word_tokenize
-from nltk import pos_tag
-
-# "logged" contains all the nutrients that are logged
-logged = ["Energy", "Protein", "Total lipid (fat)", "Carbohydrate, by difference", "Fiber, total dietary", "Sugars, total", "Sugars, added", "Calcium, Ca", "Iron, Fe", "Sodium, Na", "Vitamin C, total ascorbic acid", "Vitamin A, IU", "Fatty acids, total saturated", "Fatty acids, total trans", "Cholesterol"]
-# "allergens" contains all the possible allergens
-allergens = ["Milk", "Eggs", "Fish", "Crustacean shellfish", "Tree nuts", "Peanuts", "Wheat", "Soybeans"]
-# "allergens_list" stores the list of allergens that the food contains
-allergens_list = []
-
-def sheet_oauth():
-    '''
-       This method authorizes the sheets API requests. The client_id , client_secret, refresh_token
-        are obtained by allowing the app from a browser request.
-       Returns credentials to make API requests to google sheet.
-    '''
-    client_id = "759306969044-tnqihvtr1cm0us78g81iv9th3ohseg4v.apps.googleusercontent.com"
-    client_secret = "2OgTLPBlYk5t_HkpDzLyNpmD"
-    refresh_token = "1/qZ5F4YdLn8cXQECg-SiLGEnwBwrWgvbQpC1a81krkHo"
-    request = urllib.request.Request('https://accounts.google.com/o/oauth2/token',
-    data=urllib.parse.urlencode({
-      'grant_type':    'refresh_token',
-      'client_id':     client_id,
-      'client_secret': client_secret,
-      'refresh_token': refresh_token
-    }).encode("utf-8"),
-    headers={
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json'
-    }
-    )
-    with urllib.request.urlopen(request) as f:
-         resp = f.read()
-    access_token = json.loads(resp.decode("utf-8"))['access_token']
-    credentials = oauth2client.client.AccessTokenCredentials(
-                                    access_token=access_token,
-                                    user_agent="Google sheets API Creds",
-                                    revoke_uri="https://accounts.google.com/o/oauth2/revoke")
-    return credentials
-
-def write_to_sheet(credentials,spreadsheetId, input):
-    '''
-       This method appends the input onto the given spreadsheet.
-    '''
-    http = credentials.authorize(httplib2.Http())
-    service = build('sheets', 'v4', http=http, cache_discovery = False)
-    rangeName = 'A1'
-    value_input_option = "USER_ENTERED"
-    ip = [input["date"],input["time"],input["text"]]
-    foos = []
-    for foo in input["food"]:
-        foos.append(foo)
-    ip.append(str(foos).strip('[').strip(']').replace('\'', ''))
-    algs = []
-    for alg in input["allergens_log"]:
-        algs.append(alg)
-    ip.append(str(algs).strip('[').strip(']').replace('\'', ''))
-    for nutrient in input["nutrients"]:
-        ip.append(nutrient)
-    payload = {"values": [ip]}
-    #print(payload)
-    request = service.spreadsheets().values().append(spreadsheetId=spreadsheetId, range=rangeName,
-                                                     valueInputOption=value_input_option,body=payload)
-    response = request.execute()
-
 
 logging.basicConfig(
     level=logging.INFO,
@@ -102,76 +45,105 @@ logging.basicConfig(
 
 
 def main():
+
+    '''
+    "id" and "key" are used to make requests to the Edamam Food API
+    and they are obtained by registering for an account from Edamam.
+    '''
+    id = '5ce56395'
+    key = 'da9676a9e9fefcbb46be59b59f20bf80'
+    
     assistant = aiy.assistant.grpc.get_assistant()
     with aiy.audio.get_recorder():
          aiy.audio.say('What food did you eat today?', lang="en-US")
          print('Listening...')
          text, audio = assistant.recognize()
          if text:
+             # find date and time
              cupertino = timezone('US/Pacific')
              now = datetime.now(cupertino)
              date = now.strftime("%B %d, %Y")
              time = now.strftime("%I:%M %p")
              text2 = text.replace("I", "You") + ' on ' + date + ' at ' + time
              aiy.audio.say(text2, lang="en-US")
-             tokens = word_tokenize(text)
-             tags = pos_tag(tokens)
-            # print(tags)
-             search_list = []
-             url_food = "https://api.nal.usda.gov/ndb/search/"
-             for word,tag in tags:
-                 if tag == 'NN' or tag == 'NNP' or tag == 'NNS' or tag == 'NNPS':
-                     search_list.append(word)
-             #print(search_list)
-             food_list = []
-             if search_list:
-                 for word in search_list:
-                     querystring = {"format": "json", "q": word, "sort": "n", "max": "25", "offset": "0", "api_key": "nYWMDcdIdc9jiysWJ1V63m2klecwMtcO1PTR7IAh"}
-                     response = requests.request("GET", url_food, params=querystring)
-                     #print(response.text)
-                     resp_text = json.loads(response.text)
-                     if "errors" not in resp_text:
-                        food_list.append(word)
-                        # find the ndb number of the food
-                        ndb_number = resp_text["list"]["item"][0]["ndbno"]
-                        # print(ndb_number)
-                        url_nutrients = "https://api.nal.usda.gov/ndb/reports/"
 
-                        number = str(ndb_number)
-                        querystring_nutrients = {"ndbno": number, "type": "b", "format": "json", "api_key": "nYWMDcdIdc9jiysWJ1V63m2klecwMtcO1PTR7IAh"}
+             rawText = text
 
-                        headers_nutrients = {
-                                'cache-control': "no-cache"
-                        }
+             # Instantiate foodProcessor
+             processor = foodProcessor.foodProcessor(key,id)
 
-                        response_nutrients = requests.request("GET", url_nutrients, headers=headers_nutrients, params=querystring_nutrients)
+             '''
+             Get list of foods, foodURIs, and measureURIs for each food.
+             foodURIs and measureURIs are used to get the nutrients of each food.
+             '''
+             foods, foodURIs, measureURIs = processor.getFoodList(rawText)
+             
+             # Get allergens and nutrients from all foods
+             details = processor.getFoodDetails(foodURIs, measureURIs)
+             
+             # Instantiate foodLog
+             flog = foodLog.foodLog()
 
-                        # get nutrient list of the food
-                        response_text_nutrients = json.loads(response_nutrients.text)
+             allergens = []
+             nutrientsToLog = ["Energy", "Fat", "Carbs", "Fiber", "Sugars", "Protein", "Sodium", "Calcium", "Magnesium", "Potassium", "Iron", "Vitamin C", "Vitamin E", "Vitamin K"]
+             
+             # nutrients contains the values for each nutrient
+             nutrients = {"Energy": [], "Fat": [], "Carbs": [], "Fiber": [], "Sugars": [], "Protein": [], "Sodium": [], "Calcium": [], "Magnesium": [], "Potassium": [], "Iron": [], "Vitamin C": [], "Vitamin E": [], "Vitamin K": []}
 
-                        # get ingredients of the food
-                        ingredients_list = response_text_nutrients["report"]["food"]["ing"]["desc"]
+             for food in details:
+                 allergens.append(food["allergens"])
+                 for nutrient in nutrients:
+                    nutrients[nutrient].append(food["nutrients"][nutrient])
 
-                        # find allergens in the food
-                        for allergen in allergens:
-                           if allergen.upper() in ingredients_list:
-                              allergens_list.append(allergen)
+             algs = formatAllergens(allergens)
 
-                        # print(allergens_list)
+             credentials = flog.sheet_oauth()
 
-                        # get all nutrient values
-                        nutrient_list = []
-                        for nutrient in logged:
-                            value = 0
-                            for i in range(0, len(response_text_nutrients["report"]["food"]["nutrients"])):
-                                if (nutrient == response_text_nutrients["report"]["food"]["nutrients"][i]["name"]):
-                                    value = response_text_nutrients["report"]["food"]["nutrients"][i]["value"]
-                            #print(nutrient + ": " + str(value))
-                            nutrient_list.append(value)
+             toLog = ["date", "time", "text", "food", "allergens_log", "nutrients"]
+             # input stores the information that must be logged
+             input = {"date": date, "time": time, "text": rawText, "food": foods, "allergens_log": algs, "nutrients": nutrients}
+             
+             # ip contains the final values that will be appended onto the Google Spreadsheet
+             ip = []
+             for key in toLog:
+                if key == "date" or key == "time" or key == "text" or key == "allergens_log":
+                   ip.append(input[key])
+                elif key == "food":
+                   foos = []
+                   for foo in input["food"]:
+                      foos.append(foo)
+                   ip.append('\n'.join(foos))
+                else:
+                   for nutrient in nutrientsToLog:
+                      quantities = []
+                        
+                      # find total values for each nutrient
+                      total = 0
+                      for quantity in nutrients[nutrient]:
+                         total += float(quantity)
+                         quantities.append(str(quantity))
+                      tot = "Total: " + str(total)
+                      quantities.append(tot)
+                      ip.append('\n'.join(quantities))
 
-            #print(food_list)
-             credentials = sheet_oauth()
-             input = {"date":date,"time":time,"text":text,"food":food_list, "allergens_log": allergens_list, "nutrients": nutrient_list}
-             write_to_sheet(credentials,'1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', input)
+             payload = {"values": [ip]}
+             flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', payload)
+
+def formatAllergens(allergens):
+    '''
+    Insert new line between each food’s allergens.
+	Return formatted allergens.
+    '''
+    algs = ''
+    for i in range(len(allergens)):
+        for j in range(len(allergens[i])):
+            if j == len(allergens[i]) - 1:
+                algs += allergens[i][j]
+            else:
+                algs += allergens[i][j]
+                algs += ', '
+        algs += '\n'
+    return algs
+
 if __name__ == '__main__':
     main()
