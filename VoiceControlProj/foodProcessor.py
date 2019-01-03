@@ -1,6 +1,6 @@
 '''
-This class gets foods, allergens and nutrients 
-from the user's text using the Edamam Food API. 
+This class gets foods, allergens and nutrients
+from the user's text using the Edamam Food API.
 '''
 
 import requests
@@ -40,10 +40,21 @@ class foodProcessor(object):
         response_text = json.loads(response)
 
         food_list = response_text["parsed"]
-        for food in food_list:
-            foods.append(food["food"]["label"])
-            foodURIs.append(food["food"]["uri"])
-            measureURIs.append(food["measure"]["uri"])
+        if len(food_list) == 0:
+           '''
+           If no foods have been recognized, use the first item from
+           the list of hints, which provides close matches for food items.
+           '''
+           foods.append(response_text["hints"][0]["food"]["label"])
+           foodURIs.append(response_text["hints"][0]["food"]["uri"])
+           measures = response_text["hints"][0]["measures"]
+           measureURIs.append(measures[int((0 + len(measures) - 1)/2)]["uri"])
+        else:
+           for food in food_list:
+              foods.append(food["food"]["label"])
+              foodURIs.append(food["food"]["uri"])
+              measureURIs.append(food["measure"]["uri"])
+
         return foods, foodURIs, measureURIs
 
     def getFoodDetails(self,foodURIs,measureURIs):
@@ -74,22 +85,29 @@ class foodProcessor(object):
         response = requests.request("POST", url, data=json.dumps(payload), headers=headers, params=querystring)
 
         convert = {"ENERC_KCAL": "Energy", "FAT": "Fat", "CHOCDF": "Carbs", "FIBTG": "Fiber", "SUGAR": "Sugars", "PROCNT": "Protein", "NA": "Sodium", "CA": "Calcium", "MG": "Magnesium", "K": "Potassium", "FE": "Iron", "VITC": "Vitamin C", "TOCPHA": "Vitamin E", "VITK1": "Vitamin K"}
-
         nutrients = {"Energy": 0, "Fat": 0, "Carbs": 0, "Fiber": 0, "Sugars": 0, "Protein": 0, "Sodium": 0, "Calcium": 0, "Magnesium": 0, "Potassium": 0, "Iron": 0, "Vitamin C": 0, "Vitamin E": 0, "Vitamin K": 0}
         allergens = {}
 
         if response.status_code == 200:
             response_text = json.loads(response.text)
 
-            #if key exists record quantity of nutrient
+            if response_text["ingredients"][0]["parsed"][0]["status"] == "MISSING_QUANTITY":
+                '''
+                If status is missing quantity, set quantity to 1 serving
+                and make another POST Request to Edamam Food Database.
+                '''
+                measureURI = "http://www.edamam.com/ontologies/edamam.owl#Measure_serving"
+                payload = {"yield": 1,
+                           "ingredients": [{"quantity": 1, "measureURI": measureURI, "foodURI": foodURI}]}
+                response = requests.request("POST", url, data=json.dumps(payload), headers=headers, params=querystring)
+                response_text = json.loads(response.text)
 
+            # if the nutrient exists, then record the quantity of nutrient
             for nutrient in response_text["totalNutrients"]:
                 if nutrient in convert:
-                    nutrients[convert[nutrient]] = response_text["totalNutrients"][nutrient]["quantity"]
+                    nutrients[convert[nutrient]] = round(response_text["totalNutrients"][nutrient]["quantity"], 1)
 
             allergens = self.getAllergens(response_text)
-            #print(nutrients)
-
         else:
             print("Response Status code:", response.status_code, "Response:", response.text)
 
@@ -101,7 +119,7 @@ class foodProcessor(object):
         response_text stores the response from the POST request to the Edamam Food Database, from which allergens are extracted.
         '''
         possibleAllergens = ["WHEAT_FREE", "EGG_FREE", "MILK_FREE", "PEANUT_FREE", "TREE_NUT_FREE", "SOY_FREE", "FISH_FREE", "SHELLFISH_FREE"]
-        
+
         # allergens contains all the allergens of the given food by taking the set difference between all possible allergens and the given health labels
         allergens = set(possibleAllergens).difference(set(response_text["healthLabels"]))
         allergens = list(allergens)
