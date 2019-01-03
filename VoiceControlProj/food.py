@@ -16,8 +16,8 @@
 """A demo of the Google Assistant GRPC recognizer."""
 
 '''
-This class instantiates foodProcessor to get foods, allergens, and nutrients from the user's text. 
-It then uses foodLog to log the information onto the Google Spreadsheet. 
+This class instantiates foodProcessor to get foods, allergens, and nutrients from the user's text.
+It then uses foodLog to log the information onto the Google Spreadsheet.
 '''
 
 import foodProcessor
@@ -52,7 +52,7 @@ def main():
     '''
     id = '5ce56395'
     key = 'da9676a9e9fefcbb46be59b59f20bf80'
-    
+
     assistant = aiy.assistant.grpc.get_assistant()
     with aiy.audio.get_recorder():
          aiy.audio.say('What food did you eat today?', lang="en-US")
@@ -77,73 +77,79 @@ def main():
              foodURIs and measureURIs are used to get the nutrients of each food.
              '''
              foods, foodURIs, measureURIs = processor.getFoodList(rawText)
-             
+
              # Get allergens and nutrients from all foods
              details = processor.getFoodDetails(foodURIs, measureURIs)
-             
+
              # Instantiate foodLog
              flog = foodLog.foodLog()
 
              allergens = []
+
              nutrientsToLog = ["Energy", "Fat", "Carbs", "Fiber", "Sugars", "Protein", "Sodium", "Calcium", "Magnesium", "Potassium", "Iron", "Vitamin C", "Vitamin E", "Vitamin K"]
-             
              # nutrients contains the values for each nutrient
              nutrients = {"Energy": [], "Fat": [], "Carbs": [], "Fiber": [], "Sugars": [], "Protein": [], "Sodium": [], "Calcium": [], "Magnesium": [], "Potassium": [], "Iron": [], "Vitamin C": [], "Vitamin E": [], "Vitamin K": []}
 
              for food in details:
                  allergens.append(food["allergens"])
-                 for nutrient in nutrients:
+                 for nutrient in nutrientsToLog:
                     nutrients[nutrient].append(food["nutrients"][nutrient])
-
-             algs = formatAllergens(allergens)
 
              credentials = flog.sheet_oauth()
 
-             toLog = ["date", "time", "text", "food", "allergens_log", "nutrients"]
-             # input stores the information that must be logged
-             input = {"date": date, "time": time, "text": rawText, "food": foods, "allergens_log": algs, "nutrients": nutrients}
-             
-             # ip contains the final values that will be appended onto the Google Spreadsheet
+             # ip contains the values that will be appended onto the next row of the Google Spreadsheet
              ip = []
-             for key in toLog:
-                if key == "date" or key == "time" or key == "text" or key == "allergens_log":
-                   ip.append(input[key])
-                elif key == "food":
-                   foos = []
-                   for foo in input["food"]:
-                      foos.append(foo)
-                   ip.append('\n'.join(foos))
+             ip.append(date)
+             ip.append(time)
+             ip.append(rawText)
+
+             if len(foods) > 0:
+                '''
+                Log the date, time, text, nutrient and allergen info of
+                the first food onto the Google Spreadsheet.
+                '''
+                ip.append(foods[0])
+                if len(allergens[0]) == 0:
+                   ip.append("NONE")
                 else:
+                   ip.append(', '.join(allergens[0]))
+                for nutrient in nutrientsToLog:
+                   ip.append(nutrients[nutrient][0])
+                payload = {"values": [ip]}
+                flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', payload)
+
+                '''
+                Log the nutrient and allergen info of each subsequent
+                food onto a new row of the Google Spreadsheet.
+                '''
+                for i in range(1,len(foods)):
+                   ip = ["", "", "", foods[i]]
+                   if len(allergens[i]) == 0:
+                      ip.append("NONE")
+                   else:
+                      ip.append(', '.join(allergens[i]))
                    for nutrient in nutrientsToLog:
-                      quantities = []
-                        
-                      # find total values for each nutrient
-                      total = 0
-                      for quantity in nutrients[nutrient]:
-                         total += float(quantity)
-                         quantities.append(str(quantity))
-                      tot = "Total: " + str(total)
-                      quantities.append(tot)
-                      ip.append('\n'.join(quantities))
+                      ip.append(nutrients[nutrient][i])
+                   payload = {"values": [ip]}
+                   flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', payload)
 
-             payload = {"values": [ip]}
-             flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', payload)
-
-def formatAllergens(allergens):
-    '''
-    Insert new line between each food’s allergens.
-	Return formatted allergens.
-    '''
-    algs = ''
-    for i in range(len(allergens)):
-        for j in range(len(allergens[i])):
-            if j == len(allergens[i]) - 1:
-                algs += allergens[i][j]
-            else:
-                algs += allergens[i][j]
-                algs += ', '
-        algs += '\n'
-    return algs
+                # Log the nutrient totals onto a new row of the Google Spreadsheet.
+                ip = ["", "", "", "", ""]
+                for nutrient in nutrientsToLog:
+                   total = 0
+                   for quantity in nutrients[nutrient]:
+                      total += quantity
+                   ip.append("Total: " + str(round(total,1)))
+                payload = {"values": [ip]}
+                flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', payload)
+             else:
+                # no foods have been recognized
+                ip.append("NONE")
+                ip.append("NONE")
+                for nutrient in nutrientsToLog:
+                   ip.append("Total: 0")
+                payload = {"values": [ip]}
+                flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', payload)
 
 if __name__ == '__main__':
     main()
