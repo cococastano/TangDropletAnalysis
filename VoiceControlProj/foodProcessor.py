@@ -1,6 +1,10 @@
 '''
+Raj Palleti
+Last revision: 2/22/19
+
 This class gets foods, allergens and nutrients
 from the user's text using the Edamam Food API.
+
 '''
 
 import requests
@@ -9,7 +13,7 @@ import json
 class foodProcessor(object):
 
     def __init__(self,appID = None,appKey = None):
-        '''Initialize with app ID and app Key (needed to make requests to Edamam Food Database).'''
+        # Initialize with app ID and app Key (needed to make requests to Edamam Food Database).
         self.appID = appID
         self.appKey = appKey
 
