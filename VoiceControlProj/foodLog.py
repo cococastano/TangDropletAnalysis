@@ -1,6 +1,10 @@
 '''
+Raj Palleti
+Last revision: 2/22/19
+
 This class handles Google Sheets authorization 
 and logging information onto the Google Spreadsheet.
+
 '''
 
 import json
