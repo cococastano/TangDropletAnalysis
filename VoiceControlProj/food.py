@@ -6,15 +6,9 @@ This class instantiates foodProcessor to get each person's foods, allergens,
 and nutrients from the user's text, which is recognized using the Google Voice Kit.
 It then uses foodLog to log each person's dietary info into their own sheet in a Google Spreadsheet.
 
-This class uses Stanford NER, which requires Java to be installed.
-Download Java here: https://www.oracle.com/technetwork/java/javase/downloads/java-archive-javase8-2177648.html 
-and set the 'JAVAHOME' variable to your path of jdk/binjava. 
-
-This class uses the gender-guesser package for converting pronouns to names.
-Download the package by following the instructions here: https://test.pypi.org/project/gender-guesser/. 
-
 '''
 
+# Set the 'JAVAHOME' variable to your own path of jdk/bin/java. 
 import os
 os.environ['JAVAHOME'] = "/usr/java/jdk1.8.0_202/bin/java"
 
@@ -27,8 +21,8 @@ from nltk.tag import StanfordNERTagger
 from nltk.tokenize import word_tokenize
 import gender_guesser.detector as gender
 
-from foodApp import foodProcessor
-from foodApp import foodLog
+import foodProcessor
+import foodLog
 from datetime import datetime
 from pytz import timezone
 
@@ -39,6 +33,7 @@ def convert_pronouns_to_names(text, username):
     their corresponding names. It returns the processed text after replacing all pronouns.
     '''
 
+    # Set your own path for the classification model and Stanford tagged jar file of StanfordNERTagger. 
     st = StanfordNERTagger(
         '/home/pi/AIY-voice-kit-python/src/examples/voice/app/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz',
         '/home/pi/AIY-voice-kit-python/src/examples/voice/app/stanford-ner-2018-10-16/stanford-ner.jar',
@@ -110,6 +105,7 @@ def get_substrings(text):
     and continues until reaching the next name. It will return the list of substrings.
     '''
 
+    # Set your own path for the classification model and Stanford tagged jar file of StanfordNERTagger. 
     st = StanfordNERTagger(
         '/home/pi/AIY-voice-kit-python/src/examples/voice/app/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz',
         '/home/pi/AIY-voice-kit-python/src/examples/voice/app/stanford-ner-2018-10-16/stanford-ner.jar',
@@ -120,7 +116,6 @@ def get_substrings(text):
 
     wordCount = len(tokenized_text)
 
-    wordIndexes = []
     charIndexes = []
     charCounter = 0
     newCharCounter = 0
@@ -133,7 +128,6 @@ def get_substrings(text):
         partOfSpeech = classified_text[i][1]
 
         if partOfSpeech == 'PERSON':
-            wordIndexes.append(i)
             newCharCounter = text.find(word, charCounter)
             charIndexes.append(newCharCounter)
             charCounter = newCharCounter + 1
@@ -295,6 +289,8 @@ def log_diet(diet, rawText):
             payload = {"values": [ip]}
             flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name, payload)
 
+        # Read the values from a person's sheet
+        # and update the person's summary log. 
         values = flog.readSheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name, "A1:A10000")
         payload = flog.process_values(credentials, values, date, len(diet[name]['foods']), name)
 
