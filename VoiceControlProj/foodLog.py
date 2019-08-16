@@ -1,6 +1,6 @@
 '''
 Raj Palleti
-Last revision: 8/15/19
+Last revision: 8/16/19
 
 This class handles Google Sheets authorization
 and logging information onto the Google Spreadsheet.
@@ -157,7 +157,7 @@ class foodLog():
 
     def readSheet(self, credentials, spreadsheetId, sheetName, range):
         '''
-        Method to read and return values in a given range from a given sheet of the spreadsheet.
+        This method reads and return values in a given range from a given sheet of the spreadsheet.
         '''
 
         http = credentials.authorize(httplib2.Http())
@@ -174,9 +174,11 @@ class foodLog():
 
     def process_values(self, credentials, values, date, numFoods, sheetName):
         '''
-        Read values from a user's sheet and return daily totals to be logged onto the user's summary log sheet.
+        This method reads values from a user's sheet and 
+        returns nutrient totals to be logged onto the user's summary log sheet.
         '''
 
+        # Indexes contains all the row indexes from a person's sheet that contain today's date.
         indexes = []
         for i, j in enumerate(values):
             for d in j:
@@ -192,6 +194,12 @@ class foodLog():
         algsData = []
         engData = []
         if len(indexes):
+            '''
+            For each row from a person's sheet that contains today's date,
+            update the person's allergens consumed and nutrient totals
+            for energy, protein, fat, and sugar. 
+            '''
+            
             temp = "F" + str(indexes[0])+":F" + str(indexes[len(indexes) - 1] + numFoods)
             allData = self.readSheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', sheetName, temp)
             for j in allData:
@@ -262,10 +270,19 @@ class foodLog():
 
         value_input_option = "USER_ENTERED"
 
+        '''
+        If the summary log sheet does not contain the given date, 
+        then append a new row onto the summary log sheet that contains
+        the given date, allergens consumed, and nutrient totals .
+        '''
         if dateExists == False:
             rangeName = sheetName
             request = service.spreadsheets().values().append(spreadsheetId=spreadsheetId, range=rangeName,
-                                                             valueInputOption=value_input_option, body=payload)
+                                                            valueInputOption=value_input_option, body=payload)
+        '''
+        If the summary log sheet already contains the given date, 
+        then update the allergens consumed and nutrient totals for the given date.
+        '''
         else:
             temp = sheetName + "!A" + str(index_date) + ":F" + str(index_date)
             request = service.spreadsheets().values().update(spreadsheetId=spreadsheetId, range=temp,
