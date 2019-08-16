@@ -13,7 +13,7 @@ Stanford NER ([Download here](https://nlp.stanford.edu/software/CRF-NER.html)).
 
 - If you would like to use the same classiciation model filepath as in food.py ("/home/pi/AIY-voice-kit-python/src/examples/voice/app/stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz") and the same Stanford tagged jar filepath as in food.py ("/home/pi/AIY-voice-kit-python/src/examples/voice/app/stanford-ner-2018-10-16/stanford-ner.jar"), then create a directory called "app" in "/home/pi/AIY-voice-kit-python/src/examples/voice" and unzip the Stanford NER zipped file in the "app" directory. 
 
-Gender-guesser ([Download here](https://test.pypi.org/project/gender-guesser/)).
+Gender-guesser package ([Download here](https://test.pypi.org/project/gender-guesser/)).
 
 # Run
 python3 food.py
