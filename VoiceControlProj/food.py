@@ -1,6 +1,6 @@
 '''
 Raj Palleti
-Last revision: 8/15/19
+Last revision: 8/16/19
 
 This class instantiates foodProcessor to get each person's foods, allergens, 
 and nutrients from the user's text, which is recognized using the Google Voice Kit.
@@ -46,6 +46,7 @@ def convert_pronouns_to_names(text, username):
 
     wordCount = len(tokenized_text)
 
+    # Keep track of the most recent male and female names, which will be used to replace the pronouns "He" and "She".
     lastMaleName = ''
     lastFemaleName = ''
     index = 0
@@ -102,7 +103,8 @@ def convert_pronouns_to_names(text, username):
 def get_substrings(text):
     '''
     This method splits the text into substrings, where each begins with a name 
-    and continues until reaching the next name. It will return the list of substrings.
+    and continues until reaching the next name. It will return the list of substrings 
+    and a list that contains the name in each substring. 
     '''
 
     # Set your own path for the classification model and Stanford tagged jar file of StanfordNERTagger. 
@@ -116,6 +118,7 @@ def get_substrings(text):
 
     wordCount = len(tokenized_text)
 
+    # charIndexes stores the starting indexes for each name from the text. 
     charIndexes = []
     charCounter = 0
     newCharCounter = 0
@@ -150,6 +153,10 @@ def get_diet(substrings, names):
     It will return a dictionary containing the dietary information for each person.
     '''
 
+    '''
+    "id" and "key" are used to make requests to the Edamam Food API,
+    and they are obtained by registering for an account from Edamam.
+    '''
     id = '6bb24f34'
     key = 'bcd38e86ec9f271288974f431e0c94e6'
 
@@ -163,14 +170,22 @@ def get_diet(substrings, names):
             diet[name]['nutrients'] = {"Energy": [], "Fat": [], "Carbs": [], "Fiber": [], "Sugars": [], "Protein": [], "Sodium": [], "Calcium": [],
                                        "Magnesium": [], "Potassium": [], "Iron": [], "Vitamin C": [], "Vitamin E": [], "Vitamin K": []}
 
+    # For each substring, find the person's name and update the person's dietary information using the foods in the substring. 
     for i in range(len(substrings)):
 
         substring = substrings[i]
         name = names[i]
 
+        # Instantiate foodProcessor.
         processor = foodProcessor.foodProcessor(key, id)
+        
+        '''
+        Get list of foods, foodURIs, measureURIs, and quantities for each food.
+        foodURIs and measureURIs are used to get the nutrients for each food.
+        '''
         foods, foodIds, measureURIs, quantities = processor.get_food_list(substring)
 
+        # Get allergens and nutrients from all foods.
         details = processor.get_food_details(foodIds, measureURIs)
 
         allergens = []
@@ -178,10 +193,11 @@ def get_diet(substrings, names):
                      "Calcium": [], "Magnesium": [], "Potassium": [], "Iron": [], "Vitamin C": [], "Vitamin E": [],
                      "Vitamin K": []}
 
+        # Add the foods and quantities to the person's diet. 
         diet[name]['foods'].extend(foods)
         diet[name]['quantities'].extend(quantities)
 
-        # for food in details:
+        # For each food, add the allergens and nutrients to the person's diet. 
         for i in range(len(details)):
 
             food = details[i]
@@ -221,9 +237,7 @@ def log_diet(diet, rawText):
     It will also update everyone's summary log sheet.
     '''
 
-    id = '6bb24f34'
-    key = 'bcd38e86ec9f271288974f431e0c94e6'
-
+    # Instantiate foodLog
     flog = foodLog.foodLog()
     cupertino = timezone('US/Pacific')
     now = datetime.now(cupertino)
@@ -234,11 +248,16 @@ def log_diet(diet, rawText):
 
     for name in diet:
 
+        # ip contains the values that will be appended onto the next row of the Google Spreadsheet.
         ip = []
         ip.append(date)
         ip.append(time)
         ip.append(rawText)
 
+        '''
+        If the person consumed at least one food item, then construct a new row
+        containing dietary information to be logged in the person's sheet. 
+        '''
         if len(diet[name]['foods']) > 0:
 
             ip.append(diet[name]['foods'][0])
@@ -270,6 +289,7 @@ def log_diet(diet, rawText):
                 payload = {"values": [ip]}
                 flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name, payload)
 
+            # Construct a new row containing nutrient totals to be logged in the person's sheet. 
             ip = ["", "", "", "", "", ""]
             for nutrient in diet[name]['nutrients']:
                 total = 0
@@ -280,6 +300,7 @@ def log_diet(diet, rawText):
             payload = {"values": [ip]}
             flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name, payload)
 
+        # If the person did not consume any foods, then set the nutrient totals to 0 and update the person's sheet. 
         else:
             ip.append("NONE")
             ip.append("NONE")
@@ -289,8 +310,7 @@ def log_diet(diet, rawText):
             payload = {"values": [ip]}
             flog.write_to_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name, payload)
 
-        # Read the values from a person's sheet
-        # and update the person's summary log. 
+        # Read the nutrient values from the person's sheet and update the person's summary log. 
         values = flog.readSheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name, "A1:A10000")
         payload = flog.process_values(credentials, values, date, len(diet[name]['foods']), name)
 
@@ -347,10 +367,8 @@ def main():
              substrings, names = get_substrings(newText)
 
              for name in names:
+                # Create a new sheet for each person who does not already have a sheet in the Google Spreadsheet. 
                 if not flog.isInSheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name):
-                   # create a new sheet
-                   # we don't need to consider case when name exists in text file, if name already exists, then we are ready to log into spreadsheet where sheet name equals 'name'
-                   #createNewSheet(name)
                    flog.create_new_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', name)
                    daily_log_name = name + "_Daily_Log"
                    flog.create_new_sheet(credentials, '1GxFpWhwISzni7DWviFzH500k9eFONpSGQ8uJ0-kBKY4', daily_log_name)
