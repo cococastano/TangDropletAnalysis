@@ -77,9 +77,7 @@ class foodLog():
         service = build('sheets', 'v4', http=http, cache_discovery=False)
 
         batch_update_spreadsheet_request_body = {
-            # A list of updates to apply to the spreadsheet.
-            # Requests will be applied in the order they are specified.
-            # If any request is not valid, no requests will be applied.
+            
             'requests': [
                 {
                     "addSheet": {
