@@ -86,9 +86,9 @@ class foodLog():
                         }
                     }
                 }
-            ],  # TODO: Update placeholder value.
+            ],
 
-            # TODO: Add desired entries to the request body.
+        
         }
 
         request = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheetId,
