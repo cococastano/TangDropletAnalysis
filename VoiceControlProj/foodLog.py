@@ -271,16 +271,13 @@ class foodLog():
         '''
         If the summary log sheet does not contain the given date, 
         then append a new row onto the summary log sheet that contains
-        the given date, allergens consumed, and nutrient totals .
+        the given date, allergens consumed, and nutrient totals.
+        Otherwise, update the allergens consumed and nutrient totals for the given date.
         '''
         if dateExists == False:
             rangeName = sheetName
             request = service.spreadsheets().values().append(spreadsheetId=spreadsheetId, range=rangeName,
                                                             valueInputOption=value_input_option, body=payload)
-        '''
-        If the summary log sheet already contains the given date, 
-        then update the allergens consumed and nutrient totals for the given date.
-        '''
         else:
             temp = sheetName + "!A" + str(index_date) + ":F" + str(index_date)
             request = service.spreadsheets().values().update(spreadsheetId=spreadsheetId, range=temp,
